@@ -1,218 +1,174 @@
-//import 'dart:html';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:plant/screens/home_screen.dart';
+import 'package:tflite/tflite.dart';
 
 class ScanningScreen extends StatefulWidget {
   const ScanningScreen({Key? key}) : super(key: key);
-
   @override
   State<ScanningScreen> createState() => _ScanningScreenState();
 }
 
 class _ScanningScreenState extends State<ScanningScreen> {
-  String selectedImagePath = '';
+  bool loading = true;
+  late File _image;
+  late List _output;
+  final imagepicker = ImagePicker();
+  dynamic _predictions = [];
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-          alignment: Alignment(0, 0),
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          decoration: BoxDecoration(gradient: LinearGradient(colors: [
-            Colors.purple ,Colors.orange
-            /*hexStringToColor("CB2893"),
-        hexStringToColor("9546C4"),
-        hexStringToColor("5E61F4")*/
-          ],
-              begin:Alignment.topCenter, end: Alignment.bottomCenter
-          )),
-    child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    selectedImagePath == ''
-    ? Image.asset('assets/images/image_placeholder.png', height: 200, width: 200, fit: BoxFit.fill,)
-        : Image.file(File(selectedImagePath), height: 200, width: 200, fit: BoxFit.fill,),
-    Text(
-    'Select Image',
-    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
-    ),
-    SizedBox(
-    height: 20.0,
-    ),
-    SizedBox(
-      width: 200,
-      child: ElevatedButton(
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all(Colors.green),
-            padding:
-            MaterialStateProperty.all(const EdgeInsets.all(20)),
-            textStyle: MaterialStateProperty.all(
-                const TextStyle(fontSize: 14, color: Colors.white)),
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))
-            ),),
-          onPressed: () async {
-            selectImage();
-            setState(() {});
-          },
-          child: const Text('Select')),
-    ),
+  void initState() {
+    super.initState();
+    loadmodel().then((value) {
+      setState(() {});
+    });
+  }
 
-    SizedBox(height: 10),
+  detectimage(File image) async {
+    var prediction = await Tflite.runModelOnImage(
+        path: image.path,
+        numResults: 2,
+        threshold: 0.6,
+        imageMean: 127.5,
+        imageStd: 127.5);
 
-      SizedBox(
-        width: 200,
-        child: ElevatedButton(
-            style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.green),
-                padding:
-                MaterialStateProperty.all(const EdgeInsets.all(20)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))
-                ),
-                textStyle: MaterialStateProperty.all(
-                    const TextStyle(fontSize: 14, color: Colors.white))),
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()));
-            },
-            child: const Text('Back')),
-      ),
+    setState(() {
+      loading = false;
+      _predictions = prediction;
+    });
+  }
 
-      const SizedBox(height: 10),
-    ],
-    ),
-    ),
+  loadmodel() async {
+    await Tflite.loadModel(
+        model: 'assets/CNNmodel.tflite',
+        //useGpuDelegate: false,
     );
   }
 
-  Future selectImage() {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0)), //this right here
-            child: Container(
-              height: 150,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    Text(
-                      'Select Image From !',
-                      style: TextStyle(
-                          fontSize: 18.0, fontWeight: FontWeight.bold),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            selectedImagePath = await selectImageFromGallery();
-                            print('Image_Path:-');
-                            print(selectedImagePath);
-                            if (selectedImagePath != '') {
-                              Navigator.pop(context);
-                              setState(() {});
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text("No Image Selected !"),
-                              ));
-                            }
-                          },
-                          child: Card(
-                              elevation: 5,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/gallery.png',
-                                      height: 60,
-                                      width: 60,
-                                    ),
-                                    Text('Gallery'),
-                                  ],
-                                ),
-                              )),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            selectedImagePath = await selectImageFromCamera();
-                            print('Image_Path:-');
-                            print(selectedImagePath);
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
-                            if (selectedImagePath != '') {
-                              Navigator.pop(context);
-                              setState(() {});
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text("No Image Captured !"),
-                              ));
-                            }
-                          },
-                          child: Card(
-                              elevation: 5,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/camera.png',
-                                      height: 60,
-                                      width: 60,
-                                    ),
-                                    Text('Camera'),
-                                  ],
-                                ),
-                              )),
+  pickimage_camera() async {
+    var image = await imagepicker.pickImage(source: ImageSource.camera);
+    if (image == null) {
+      return null;
+    } else {
+      _image = File(image.path);
+    }
+    detectimage(_image);
+  }
+
+  pickimage_gallery() async {
+    var image = await imagepicker.pickImage(source: ImageSource.gallery);
+    if (image == null) {
+      return null;
+    } else {
+      _image = File(image.path);
+    }
+    detectimage(_image);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var h = MediaQuery.of(context).size.height;
+    var w = MediaQuery.of(context).size.width;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'ML Classifier',
+          style: GoogleFonts.roboto(),
+        ),
+      ),
+      body: Container(
+        height: h,
+        width: w,
+        child: Column(
+          children: [
+            Container(
+              height: 150,
+              width: 150,
+              padding: EdgeInsets.all(10),
+              child: Image.asset('assets/mask.png'),
+            ),
+            Container(
+                child: Text('Mask Detector',
+                    style: GoogleFonts.roboto(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ))),
+            SizedBox(height: 50),
+            Container(
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.only(left: 10, right: 10),
+                    height: 50,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.teal[800],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                      ],
-                    )
-                  ],
-                ),
+                        child: Text('Capture',
+                            style: GoogleFonts.roboto(fontSize: 18)),
+                        onPressed: () {
+                          pickimage_camera();
+                        }),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    padding: EdgeInsets.only(left: 10, right: 10),
+                    height: 50,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.teal[800],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+
+                        child: Text('Gallery',
+                            style: GoogleFonts.roboto(fontSize: 18)),
+                        onPressed: () {
+                          pickimage_gallery();
+                        }),
+                  ),
+                ],
               ),
             ),
-          );
-        });
-  }
-
-  selectImageFromGallery() async {
-    XFile? file = await ImagePicker()
-        .pickImage(source: ImageSource.gallery, imageQuality: 10);
-    if (file != null) {
-      return file.path;
-    } else {
-      return '';
-    }
-  }
-
-  //
-  selectImageFromCamera() async {
-    XFile? file = await ImagePicker()
-        .pickImage(source: ImageSource.camera, imageQuality: 10);
-    if (file != null) {
-      return file.path;
-    } else {
-      return '';
-    }
+            loading != true
+                ? Container(
+              child: Column(
+                children: [
+                  Container(
+                    height: 220,
+                    // width: double.infinity,
+                    padding: EdgeInsets.all(15),
+                    child: Image.file(_image),
+                  ),
+                  _output != null
+                      ? Text(
+                      (_output[0]['label']).toString().substring(2),
+                      style: GoogleFonts.roboto(fontSize: 18))
+                      : Text(''),
+                  _output != null
+                      ? Text(
+                      'Confidence: ' +
+                          (_output[0]['confidence']).toString(),
+                      style: GoogleFonts.roboto(fontSize: 18))
+                      : Text('')
+                ],
+              ),
+            )
+                : Container()
+          ],
+        ),
+      ),
+    );
   }
 }
-
-
-
-
-/*SizedBox(
-                    height: 30,
-                  ),
-                  ElevatedButton(
-                      onPressed: (){
-
-                      },
-                      child: const Text("Go Back", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      )
-                  ),*/

@@ -3,10 +3,11 @@
    <application
        android:requestLegacyExternalStorage="true"
         android:label="plant"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:name="com.example.plant.MyApp"
+        android:icon="@mipmap/ic_launcher"
+       >
         <activity
-            android:name=".MainActivity"
+            android:name=".MyApp"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"

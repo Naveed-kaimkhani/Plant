@@ -1,6 +1,7 @@
 package com.example.plant
 
-import io.flutter.embedding.android.FlutterActivity
+import android.app.Application
 
-class MainActivity: FlutterActivity() {
+
+class MyApp : Application() { // You can add custom code or configurations here if needed
 }
