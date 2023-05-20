@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "9971392790",
+    "project_id": "signinsystem-e4cf2",
+    "storage_bucket": "signinsystem-e4cf2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9971392790:android:fddfd7755416ed0617f037",
+        "android_client_info": {
+          "package_name": "com.example.plant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9971392790-3938st8htllqhkr4p45obqbo55gjdq1s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.plant",
+            "certificate_hash": "f57f253822bb668c5b43ec588fa9e2c57cb3a54d"
+          }
+        },
+        {
+          "client_id": "9971392790-3ee1nk052a5rs421dcnpqgcjhkrpn8lr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSf4bgitFJ3Vr0EF9IN3AdkyXMSa3aeiE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9971392790-3ee1nk052a5rs421dcnpqgcjhkrpn8lr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
